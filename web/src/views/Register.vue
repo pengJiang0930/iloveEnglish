@@ -1,7 +1,7 @@
 <template>
-  <div class="login">
-    <h2>登录</h2>
-    <el-form @submit.prevent="handleLogin">
+  <div class="register">
+    <h2>注册</h2>
+    <el-form @submit.prevent="handleRegister">
       <el-form-item>
         <el-input
           v-model="phone"
@@ -13,24 +13,40 @@
         <el-input
           v-model="password"
           type="password"
-          placeholder="请输入密码"
+          placeholder="请输入密码（至少6位）"
           prefix-icon="Lock"
           show-password
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-input
+          v-model="confirmPassword"
+          type="password"
+          placeholder="请确认密码"
+          prefix-icon="Lock"
+          show-password
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-input
+          v-model="nickname"
+          placeholder="请输入昵称（选填）"
+          prefix-icon="User"
         />
       </el-form-item>
       <el-form-item>
         <el-button
           type="primary"
           :loading="loading"
-          @click="handleLogin"
+          @click="handleRegister"
           style="width: 100%"
         >
-          登录
+          注册
         </el-button>
       </el-form-item>
       <el-form-item>
         <div class="links">
-          <router-link to="/register">还没有账号？立即注册</router-link>
+          <router-link to="/login">已有账号？立即登录</router-link>
         </div>
       </el-form-item>
     </el-form>
@@ -46,11 +62,13 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const userStore = useUserStore()
 
-const phone = ref('13800138000')
-const password = ref('123456')
+const phone = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const nickname = ref('')
 const loading = ref(false)
 
-async function handleLogin() {
+async function handleRegister() {
   if (!phone.value) {
     ElMessage.warning('请输入手机号')
     return
@@ -59,11 +77,19 @@ async function handleLogin() {
     ElMessage.warning('请输入密码')
     return
   }
-  
+  if (password.value.length < 6) {
+    ElMessage.warning('密码长度不能少于6位')
+    return
+  }
+  if (password.value !== confirmPassword.value) {
+    ElMessage.warning('两次输入的密码不一致')
+    return
+  }
+
   loading.value = true
   try {
-    await userStore.login(phone.value, password.value)
-    ElMessage.success('登录成功')
+    await userStore.register(phone.value, password.value, nickname.value)
+    ElMessage.success('注册成功')
     router.push('/')
   } catch (error) {
     console.error(error)
@@ -74,7 +100,7 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.login {
+.register {
   max-width: 400px;
   margin: 100px auto;
   padding: 20px;
