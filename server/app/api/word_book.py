@@ -139,12 +139,12 @@ async def toggle_book_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        book = await word_book_service.get_book_detail(db, book_id)
-        if not book:
-            raise HTTPException(status_code=404, detail="词书不存在")
-        new_status = 0 if book["status"] == 1 else 1
-        await word_book_service.update_book(db, book_id, status=new_status)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    from sqlalchemy import select
+    from app.models.word_book import WordBook
+    result = await db.execute(select(WordBook).where(WordBook.id == book_id))
+    book = result.scalar_one_or_none()
+    if not book:
+        raise HTTPException(status_code=404, detail="词书不存在")
+    new_status = 0 if book.status == 1 else 1
+    await word_book_service.update_book(db, book_id, status=new_status)
     return ApiResponse(message="操作成功")
