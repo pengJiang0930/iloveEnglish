@@ -6,8 +6,12 @@ from app.models.word_book import WordBook
 from app.models.user_word_book import UserWordBook
 
 
-async def get_book_list(db: AsyncSession, category: str | None = None) -> list[WordBook]:
-    query = select(WordBook).where(WordBook.status == 1)
+async def get_book_list(
+    db: AsyncSession, category: str | None = None, include_inactive: bool = False
+) -> list[WordBook]:
+    query = select(WordBook)
+    if not include_inactive:
+        query = query.where(WordBook.status == 1)
     if category:
         query = query.where(WordBook.category == category)
     query = query.order_by(WordBook.sort_order, WordBook.id)
@@ -170,4 +174,34 @@ async def update_progress(db: AsyncSession, user_id: int, book_id: int, learned_
         user_book.status = 2
         user_book.finished_at = datetime.now(timezone.utc)
 
+    await db.commit()
+
+
+async def create_book(db: AsyncSession, **kwargs) -> WordBook:
+    book = WordBook(**kwargs)
+    db.add(book)
+    await db.commit()
+    await db.refresh(book)
+    return book
+
+
+async def update_book(db: AsyncSession, book_id: int, **kwargs) -> WordBook:
+    result = await db.execute(select(WordBook).where(WordBook.id == book_id))
+    book = result.scalar_one_or_none()
+    if not book:
+        raise ValueError("词书不存在")
+    for key, value in kwargs.items():
+        if value is not None:
+            setattr(book, key, value)
+    await db.commit()
+    await db.refresh(book)
+    return book
+
+
+async def delete_book(db: AsyncSession, book_id: int) -> None:
+    result = await db.execute(select(WordBook).where(WordBook.id == book_id))
+    book = result.scalar_one_or_none()
+    if not book:
+        raise ValueError("词书不存在")
+    await db.delete(book)
     await db.commit()

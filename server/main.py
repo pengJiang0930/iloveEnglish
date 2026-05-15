@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from app.api import auth_router, health_router, word_book_router, word_router
+from app.api import auth_router, health_router, word_book_router, word_router, admin_router
 
 app = FastAPI(
     title="iLoveEnglish API",
@@ -23,6 +23,7 @@ app.include_router(auth_router)
 app.include_router(health_router)
 app.include_router(word_book_router)
 app.include_router(word_router)
+app.include_router(admin_router)
 
 
 @app.exception_handler(ValueError)

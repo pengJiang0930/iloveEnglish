@@ -6,6 +6,8 @@ from app.schemas.word_book import (
     WordBookDetailResponse,
     SelectWordBookRequest,
     UpdateProgressRequest,
+    WordBookCreateRequest,
+    WordBookUpdateRequest,
 )
 from app.schemas.user import ApiResponse
 from app.services import word_book_service
@@ -18,10 +20,11 @@ router = APIRouter(prefix="/api/word-books", tags=["词书"])
 @router.get("", response_model=ApiResponse, summary="获取词书列表")
 async def get_book_list(
     category: str | None = None,
+    include_inactive: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    books = await word_book_service.get_book_list(db, category)
+    books = await word_book_service.get_book_list(db, category, include_inactive)
     return ApiResponse(
         data=[WordBookResponse.model_validate(b).model_dump() for b in books]
     )
@@ -85,3 +88,63 @@ async def get_book_detail(
     if not result:
         raise HTTPException(status_code=404, detail="词书不存在")
     return ApiResponse(data=result)
+
+
+@router.post("", response_model=ApiResponse, summary="新增词书（管理端）")
+async def create_book(
+    body: WordBookCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = await word_book_service.create_book(db, **body.model_dump())
+    return ApiResponse(
+        message="创建成功",
+        data=WordBookResponse.model_validate(book).model_dump(),
+    )
+
+
+@router.put("/{book_id}", response_model=ApiResponse, summary="编辑词书（管理端）")
+async def update_book(
+    book_id: int,
+    body: WordBookUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        book = await word_book_service.update_book(db, book_id, **body.model_dump(exclude_none=True))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(
+        message="更新成功",
+        data=WordBookResponse.model_validate(book).model_dump(),
+    )
+
+
+@router.delete("/{book_id}", response_model=ApiResponse, summary="删除词书（管理端）")
+async def delete_book(
+    book_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        await word_book_service.delete_book(db, book_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(message="删除成功")
+
+
+@router.put("/{book_id}/status", response_model=ApiResponse, summary="切换词书上架/下架（管理端）")
+async def toggle_book_status(
+    book_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        book = await word_book_service.get_book_detail(db, book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail="词书不存在")
+        new_status = 0 if book["status"] == 1 else 1
+        await word_book_service.update_book(db, book_id, status=new_status)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(message="操作成功")

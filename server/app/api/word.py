@@ -4,6 +4,9 @@ from app.core.database import get_db
 from app.schemas.word import (
     AddToWordListRequest,
     UpdateWordStatusRequest,
+    WordCreateRequest,
+    WordUpdateRequest,
+    WordResponse,
 )
 from app.schemas.user import ApiResponse
 from app.services import word_service
@@ -109,3 +112,49 @@ async def update_word_status(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return ApiResponse(message="更新成功")
+
+
+@router.post("/admin", response_model=ApiResponse, summary="新增单词（管理端）")
+async def create_word(
+    body: WordCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        word = await word_service.create_word(db, **body.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(
+        message="创建成功",
+        data=WordResponse.model_validate(word).model_dump(),
+    )
+
+
+@router.put("/admin/{word_id}", response_model=ApiResponse, summary="编辑单词（管理端）")
+async def update_word(
+    word_id: int,
+    body: WordUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        word = await word_service.update_word(db, word_id, **body.model_dump(exclude_none=True))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(
+        message="更新成功",
+        data=WordResponse.model_validate(word).model_dump(),
+    )
+
+
+@router.delete("/admin/{word_id}", response_model=ApiResponse, summary="删除单词（管理端）")
+async def delete_word(
+    word_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        await word_service.delete_word(db, word_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ApiResponse(message="删除成功")

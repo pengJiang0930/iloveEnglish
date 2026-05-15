@@ -43,3 +43,25 @@ class UpdateProgressRequest(BaseModel):
     book_id: int = Field(..., description="词书ID")
     learned_count: int = Field(default=1, description="学习单词数")
     mastered_count: int = Field(default=0, description="掌握单词数")
+
+
+class WordBookCreateRequest(BaseModel):
+    name: str = Field(..., max_length=100, description="词书名称")
+    description: str | None = Field(None, max_length=500, description="描述")
+    category: str = Field(..., description="分类: core / exam / daily")
+    word_count: int = Field(default=0, description="单词总数")
+    cover_image: str | None = Field(None, max_length=255, description="封面图片URL")
+    sort_order: int = Field(default=0, description="排序")
+    is_free: int = Field(default=1, description="是否免费")
+    status: int = Field(default=1, description="状态 0=下架 1=上架")
+
+
+class WordBookUpdateRequest(BaseModel):
+    name: str | None = Field(None, max_length=100, description="词书名称")
+    description: str | None = Field(None, max_length=500, description="描述")
+    category: str | None = Field(None, description="分类")
+    word_count: int | None = Field(None, description="单词总数")
+    cover_image: str | None = Field(None, max_length=255, description="封面图片URL")
+    sort_order: int | None = Field(None, description="排序")
+    is_free: int | None = Field(None, description="是否免费")
+    status: int | None = Field(None, description="状态")

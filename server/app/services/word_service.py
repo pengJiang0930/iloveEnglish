@@ -288,3 +288,65 @@ async def get_review_words(db: AsyncSession, user_id: int, limit: int = 20) -> l
         }
         for entry in entries
     ]
+
+
+async def create_word(db: AsyncSession, book_id: int | None = None, **kwargs) -> Word:
+    existing = await db.execute(select(Word).where(Word.word == kwargs.get("word")))
+    if existing.scalar_one_or_none():
+        raise ValueError("该单词已存在")
+
+    word = Word(**{k: v for k, v in kwargs.items() if k != "book_id"})
+    db.add(word)
+    await db.flush()
+
+    if book_id:
+        book_result = await db.execute(select(WordBook).where(WordBook.id == book_id))
+        if book_result.scalar_one_or_none():
+            max_order = await db.execute(
+                select(func.max(WordBookItem.sort_order)).where(WordBookItem.book_id == book_id)
+            )
+            next_order = (max_order.scalar() or 0) + 1
+            item = WordBookItem(book_id=book_id, word_id=word.id, sort_order=next_order)
+            db.add(item)
+
+    await db.commit()
+    await db.refresh(word)
+    return word
+
+
+async def update_word(db: AsyncSession, word_id: int, **kwargs) -> Word:
+    result = await db.execute(select(Word).where(Word.id == word_id))
+    word = result.scalar_one_or_none()
+    if not word:
+        raise ValueError("单词不存在")
+
+    if "word" in kwargs and kwargs["word"] and kwargs["word"] != word.word:
+        dup = await db.execute(select(Word).where(Word.word == kwargs["word"]))
+        if dup.scalar_one_or_none():
+            raise ValueError("该单词已存在")
+
+    for key, value in kwargs.items():
+        if value is not None:
+            setattr(word, key, value)
+    await db.commit()
+    await db.refresh(word)
+    return word
+
+
+async def delete_word(db: AsyncSession, word_id: int) -> None:
+    result = await db.execute(select(Word).where(Word.id == word_id))
+    word = result.scalar_one_or_none()
+    if not word:
+        raise ValueError("单词不存在")
+
+    await db.execute(
+        select(WordBookItem).where(WordBookItem.word_id == word_id)
+    )
+    items_result = await db.execute(
+        select(WordBookItem).where(WordBookItem.word_id == word_id)
+    )
+    for item in items_result.scalars().all():
+        await db.delete(item)
+
+    await db.delete(word)
+    await db.commit()

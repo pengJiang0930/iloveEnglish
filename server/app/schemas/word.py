@@ -68,6 +68,33 @@ class UpdateWordStatusRequest(BaseModel):
     status: int = Field(..., description="0=未掌握, 1=已掌握")
 
 
+class WordCreateRequest(BaseModel):
+    word: str = Field(..., max_length=100, description="英文单词")
+    phonetic: str | None = Field(None, max_length=100, description="音标")
+    meaning_cn: str = Field(..., max_length=500, description="中文释义")
+    meaning_en: str | None = Field(None, max_length=500, description="英文释义")
+    part_of_speech: str | None = Field(None, max_length=50, description="词性")
+    frequency: int = Field(default=0, description="词频")
+    level: int = Field(default=1, description="难度等级 1-5")
+    example_sentence: str | None = Field(None, description="例句")
+    example_translation: str | None = Field(None, max_length=500, description="例句翻译")
+    audio_url: str | None = Field(None, max_length=255, description="发音音频URL")
+    book_id: int | None = Field(None, description="所属词书ID（可选）")
+
+
+class WordUpdateRequest(BaseModel):
+    word: str | None = Field(None, max_length=100, description="英文单词")
+    phonetic: str | None = Field(None, max_length=100, description="音标")
+    meaning_cn: str | None = Field(None, max_length=500, description="中文释义")
+    meaning_en: str | None = Field(None, max_length=500, description="英文释义")
+    part_of_speech: str | None = Field(None, max_length=50, description="词性")
+    frequency: int | None = Field(None, description="词频")
+    level: int | None = Field(None, description="难度等级")
+    example_sentence: str | None = Field(None, description="例句")
+    example_translation: str | None = Field(None, max_length=500, description="例句翻译")
+    audio_url: str | None = Field(None, max_length=255, description="发音音频URL")
+
+
 class UserWordListItem(BaseModel):
     id: int
     word_id: int
