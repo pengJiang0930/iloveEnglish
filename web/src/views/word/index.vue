@@ -87,8 +87,8 @@
         <el-form-item label="例句翻译">
           <el-input v-model="form.example_translation" placeholder="例句翻译" />
         </el-form-item>
-        <el-form-item label="所属词书" v-if="!isEdit">
-          <el-select v-model="form.book_id" placeholder="选择词书（可选）" clearable>
+        <el-form-item label="所属词书" v-if="!isEdit" prop="book_id">
+          <el-select v-model="form.book_id" placeholder="请选择词书">
             <el-option v-for="book in bookList" :key="book.id" :label="book.name" :value="book.id" />
           </el-select>
         </el-form-item>
@@ -128,6 +128,7 @@ const form = ref({
 const rules = {
   word: [{ required: true, message: '请输入单词', trigger: 'blur' }],
   meaning_cn: [{ required: true, message: '请输入中文释义', trigger: 'blur' }],
+  book_id: [{ required: true, message: '请选择词书', trigger: 'change' }],
 }
 
 async function loadBooks() {
@@ -160,6 +161,11 @@ function openDialog(row?: any) {
   } else {
     isEdit.value = false
     editId.value = 0
+    form.value = {
+      word: '', phonetic: '', meaning_cn: '', part_of_speech: '',
+      level: 1, example_sentence: '', example_translation: '',
+      book_id: bookId.value ? (bookId.value as number) : null
+    }
   }
   dialogVisible.value = true
 }
@@ -182,6 +188,9 @@ async function handleSubmit() {
     } else {
       await wordApi.create(form.value as any)
       ElMessage.success('创建成功')
+      if (!bookId.value && form.value.book_id) {
+        bookId.value = form.value.book_id
+      }
     }
     dialogVisible.value = false
     loadWords()
