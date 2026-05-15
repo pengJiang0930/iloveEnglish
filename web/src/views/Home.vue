@@ -96,8 +96,9 @@ onMounted(async () => {
   }
   try {
     const h: any = await api.get('/health')
-    healthStatus.value = h.status || 'error'
-    dbStatus.value = h.database || 'error'
+    const d = h.data || h
+    healthStatus.value = d.status || 'error'
+    dbStatus.value = d.database || 'error'
   } catch { healthStatus.value = 'error'; dbStatus.value = 'error' }
   try {
     const r: any = await adminApi.getDashboard()
