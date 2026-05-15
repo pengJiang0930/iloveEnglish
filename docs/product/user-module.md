@@ -1,39 +1,73 @@
-# Dev02 - 数据库搭建
+# 用户模块
 
-## 目标
+---
 
-配置 MySQL 数据库连接，创建数据模型，执行数据库迁移。
+## 一、功能概述
 
-## 任务清单
+提供用户的注册、登录、个人信息管理、学习设置等功能。
 
-### 2.1 创建 MySQL 数据库
+---
 
-- [ ] 创建 `ilove_english` 数据库（utf8mb4）
-- [ ] 确认 MySQL 服务可正常连接
+## 二、用户注册与登录
 
-### 2.2 配置数据库连接
+### 2.1 注册
+- 手机号注册（必填：手机号、密码；可选：昵称）
+- 注册成功后自动创建 `user_setting` 记录
+- 昵称默认为空字符串
 
-- [ ] 完善 `app/core/config.py` - 添加数据库配置项
-- [ ] 完善 `app/core/database.py` - SQLAlchemy 异步引擎 + 会话工厂
-- [ ] 创建 `.env` 文件 - 数据库连接信息
+### 2.2 登录
+- 手机号 + 密码登录
+- 登录成功后返回 JWT Token，有效期可配置
+- 更新 `last_login_at` 时间
 
-### 2.3 创建数据模型
+### 2.3 认证机制
+- JWT Token（python-jose），Bearer 方式传递
+- 密码使用 bcrypt 哈希存储（SHA256 预哈希）
+- Token 过期后返回 401
 
-- [ ] `app/models/base.py` - 基础模型（公共字段）
-- [ ] `app/models/user.py` - 用户模型
-- [ ] `app/models/user_setting.py` - 用户设置模型
-- [ ] `app/models/__init__.py` - 统一导出
+---
 
-### 2.4 配置 Alembic 迁移
+## 三、个人资料管理
 
-- [ ] 初始化 Alembic
-- [ ] 配置异步迁移引擎
-- [ ] 生成初始迁移脚本
-- [ ] 执行迁移，验证表结构
+| 字段 | 说明 |
+|------|------|
+| uid | 用户唯一标识（UUID） |
+| phone | 手机号 |
+| nickname | 昵称 |
+| avatar | 头像URL |
+| level | 英语等级（1-5） |
+| daily_goal | 每日学习目标（单词数，默认20） |
+| vip_level | 会员等级（0=免费，1=月度，2=年度，3=终身） |
+| vip_expire_at | 会员过期时间 |
+| last_login_at | 最后登录时间 |
 
-## 数据库表结构
+### 英语等级枚举
 
-### user 表
+| 值 | 说明 |
+|----|------|
+| 1 | 零基础 |
+| 2 | 初级 |
+| 3 | 中级 |
+| 4 | 高级 |
+| 5 | 精通 |
+
+---
+
+## 四、用户设置
+
+| 字段 | 说明 | 默认值 |
+|------|------|--------|
+| daily_reminder | 每日提醒开关 | 1（开） |
+| reminder_time | 提醒时间 | 20:00 |
+| pronunciation | 发音偏好（us=美音, uk=英音） | us |
+| theme | 主题（light/dark） | light |
+| font_size | 字体大小 | medium |
+
+---
+
+## 五、数据表结构
+
+### user
 
 ```sql
 CREATE TABLE `user` (
@@ -53,12 +87,11 @@ CREATE TABLE `user` (
   `deleted_at` datetime DEFAULT NULL COMMENT '软删除时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_uid` (`uid`),
-  KEY `idx_phone` (`phone`),
-  KEY `idx_created_at` (`created_at`)
+  KEY `idx_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 ```
 
-### user_setting 表
+### user_setting
 
 ```sql
 CREATE TABLE `user_setting` (
@@ -76,9 +109,13 @@ CREATE TABLE `user_setting` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户设置表';
 ```
 
-## 验证标准
+---
 
-- [ ] MySQL 数据库创建成功
-- [ ] Alembic 迁移执行成功
-- [ ] user、user_setting 表创建成功
-- [ ] 表结构与设计一致
+## 六、业务规则
+
+1. 手机号必须唯一，重复注册返回"手机号已注册"
+2. 密码长度 6-50 位，使用 bcrypt + SHA256 预哈希存储
+3. 注册时自动创建 `user_setting` 默认配置
+4. 登录时校验密码，错误返回"密码错误"
+5. Token 无效或过期返回 401
+6. 软删除用户通过 `deleted_at` 字段标记
