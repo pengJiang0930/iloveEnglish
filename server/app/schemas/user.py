@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -34,4 +35,4 @@ class TokenResponse(BaseModel):
 class ApiResponse(BaseModel):
     code: int = 0
     message: str = "success"
-    data: dict | None = None
+    data: Any = None

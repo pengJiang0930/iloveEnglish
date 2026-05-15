@@ -17,7 +17,8 @@
 ### 数据库搭建 ✅
 - MySQL 8.0 数据库创建（`ilove_english`，utf8mb4）
 - Alembic 异步迁移配置
-- 模型创建：`user`, `user_setting`, `word_book`, `user_word_book`, `word`, `word_book_item`, `user_word_list`, `word_memory_tip`
+- 模型创建：`user`, `user_setting`, `word_book`, `user_word_book`, `word`, `word_book_item`, `user_word_list`
+- 模型待创建：`word_memory_tip`, `translate_history`, `translate_word_item`, `daily_stat`, `learning_streak`, `feedback`
 - 词书种子数据预置
 
 ### 用户认证 ✅
@@ -40,12 +41,22 @@
   - `GET /api/word-books/user/list` — 用户词书列表
   - `PUT /api/word-books/user/progress` — 更新进度
 
-### 单词管理 🔶 部分完成
-- 模型已创建：`word`, `word_book_item`, `user_word_list`
-- API 路由待补充完整
+### 单词管理 ✅
+- 模型：`word`, `word_book_item`, `user_word_list`
+- Pydantic Schema：`WordResponse`, `WordDetailResponse`, `WordListData`, `AddToWordListRequest` 等
+- Service 层：词书单词列表、下一个待学、单词详情、单词本 CRUD、艾宾浩斯复习
+- API 路由（8 个端点）：
+  - `GET /api/words/book/{book_id}` — 词书单词列表（分页）
+  - `GET /api/words/next` — 下一个待学习单词
+  - `GET /api/words/{word_id}` — 单词详情（含助记信息）
+  - `POST /api/words/word-list` — 添加到单词本
+  - `DELETE /api/words/word-list/{word_id}` — 从单词本移除
+  - `PUT /api/words/word-list/{word_id}/status` — 更新掌握状态
+  - `GET /api/words/word-list` — 获取用户单词本（分页+筛选）
+  - `GET /api/words/review` — 获取待复习单词
 
-### AI速记 🔶 规划中
-- 模型已创建：`word_memory_tip`
+### AI速记 🔲 待开发
+- 模型待创建：`word_memory_tip`
 - AI服务对接规划中
 
 ### 翻译 🔲 待开发
@@ -94,7 +105,7 @@
 |------|------|------|
 | 登录/注册 | ✅ | 对接后端 API |
 | 词书管理 | 🔶 | 列表/详情页完成，新增/编辑待实现 |
-| 单词管理 | 🔶 | 按词书筛选列表，增删改待实现 |
+| 单词管理 | ✅ | 按词书筛选列表 + 分页，对接后端 API |
 | AI速记管理 | 🔲 | 待开发 |
 | 用户管理 | 🔲 | 待开发 |
 | 样式优化 | ✅ | 修复页面留白 + 按钮间距问题 |
@@ -108,3 +119,4 @@
 | `56a75e93f4b3` | 创建 user + user_setting 表 |
 | `a1b2c3d4e5f6` | 创建 word_book + user_word_book 表 |
 | `b2c3d4e5f6a7` | 预置词书种子数据 |
+| `c3d4e5f6a7b8` | 创建 word + word_book_item + user_word_list 表 |

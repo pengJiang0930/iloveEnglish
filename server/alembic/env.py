@@ -8,7 +8,7 @@ from alembic import context
 
 from app.core.config import get_settings
 from app.models.base import Base
-from app.models import User, UserSetting, WordBook, UserWordBook
+from app.models import User, UserSetting, WordBook, UserWordBook, Word, WordBookItem, UserWordList
 
 config = context.config
 config.set_main_option("sqlalchemy.url", get_settings().DATABASE_URL)
